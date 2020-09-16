@@ -2,7 +2,6 @@
 // Created by leonard on 08.09.20.
 //
 
-
 #ifndef LWE_STRUCTS_LWE_H
 #define LWE_STRUCTS_LWE_H
 

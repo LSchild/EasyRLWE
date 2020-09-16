@@ -49,13 +49,13 @@ struct TemplateVector {
         return elements[idx];
     }
 
-    void operator+=(TemplateVector& rhs) {
+    void operator+=(const TemplateVector& rhs) {
         for(int i = 0; i < len; i++) {
             elements[i] = (elements[i] + rhs[i]) % mod;
         }
     }
 
-    void operator-=(TemplateVector& rhs) {
+    void operator-=(const TemplateVector& rhs) {
         for(int i = 0; i < len; i++) {
             elements[i] = mod_sub<T, mod>(elements[i], rhs[i]);
         }
@@ -87,11 +87,16 @@ TemplateVector<T, len, mod> operator-(TemplateVector<T, len, mod> lhs, const Tem
 }
 
 template<typename T, size_t len, T mod>
-TemplateVector<T, len, mod> operator*(TemplateVector<T, len, mod> lhs, const T& rhs) {
+TemplateVector<T, len, mod> operator*(TemplateVector<T, len, mod> lhs, T rhs) {
     lhs *= rhs;
     return lhs;
 }
 
+template<typename T, size_t len, T mod>
+TemplateVector<T, len, mod> operator*(T lhs, TemplateVector<T, len, mod> rhs) {
+    rhs *= lhs;
+    return rhs;
+}
 /*
  * Dot product
  */
@@ -104,6 +109,8 @@ T operator*(const TemplateVector<T, len, mod>& lhs, const TemplateVector<T, len,
         temp = mod_mul<T, mod>(lhs[i], rhs[i]);
         accu = (accu + temp) % mod;
     }
+
+    return accu;
 }
 
 template<typename T, size_t dim, T mod>
