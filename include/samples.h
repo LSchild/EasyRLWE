@@ -32,6 +32,14 @@ struct TemplateLweSample {
         return *this;
     }
 
+    TemplateVector<T, len, modulus> getA() const {
+        return a;
+    }
+
+    T getB() const {
+        return b;
+    }
+
     T& operator[](int idx) {
         return a[idx];
     }
@@ -80,7 +88,7 @@ struct TemplateRLweSample {
         b = other.b;
     }
 
-    TemplateRLweSample(TemplatePolynomial<T, modulus, dim>& a0, TemplatePolynomial<T, modulus, dim>& a1) {
+    TemplateRLweSample(TemplatePolynomial<T, dim, modulus>& a0, TemplatePolynomial<T, dim, modulus>& a1) {
         a = a0;
         b = a1;
     }
@@ -88,7 +96,6 @@ struct TemplateRLweSample {
     friend void swap(TemplateRLweSample& lhs, TemplateRLweSample& rhs) {
         using std::swap;
 
-        swap(lhs.engine, rhs.engine);
         swap(lhs.a, rhs.a);
         swap(lhs.b, rhs.b);
     }
@@ -122,16 +129,16 @@ struct TemplateRLweSample {
         b -= rhs.b;
     }
 
-    void operator*=(TemplatePolynomial<T, dim, modulus>& rhs) {
+    void operator*=(const TemplatePolynomial<T, dim, modulus>& rhs) {
         a *= rhs;
         b *= rhs;
     }
 
-    TemplatePolynomial<T,dim,modulus> getA() {
+    TemplatePolynomial<T,dim,modulus> getA() const {
         return a;
     }
 
-    TemplatePolynomial<T,dim,modulus> getB() {
+    TemplatePolynomial<T,dim,modulus> getB() const {
         return b;
     }
 
@@ -166,6 +173,10 @@ struct TemplateRLwePrimeSample {
         return decomposition_base;
     }
 
+    T getDimension() const {
+        return decomposition_dimension;
+    }
+
     TemplateRLwePrimeSample& operator=(TemplateRLwePrimeSample other) {
         swap(*this, other);
         return *this;
@@ -188,15 +199,19 @@ struct TemplateRLwePrimeSample {
     }
 
     void operator+=(const TemplateRLwePrimeSample& rhs) {
-        for(int i = 0; i < dim; i++) {
+        for(int i = 0; i < decomposition_dimension; i++) {
             entries.at(i) += rhs.entries.at(i);
         }
     }
 
     void operator-=(const TemplateRLwePrimeSample& rhs) {
-        for(int i = 0; i < dim; i++) {
+        for(int i = 0; i < decomposition_dimension; i++) {
             entries[i] -= rhs.entries[i];
         }
+    }
+
+    std::vector<TemplateRLweSample<T, dim, modulus>>& getEntries() {
+        return entries;
     }
 
 private:
@@ -239,6 +254,22 @@ struct TemplateRGswSample {
         rhs -= other.rhs;
     }
 
+    TemplateRLwePrimeSample<T, dim, modulus>& operator[](int idx) {
+        switch (idx) {
+            case 0: return lhs;
+            case 1: return rhs;
+            default: throw std::invalid_argument("Indices greater than 1 not supported");
+        }
+    }
+
+    TemplateRLwePrimeSample<T, dim, modulus> operator[](int idx) const {
+        switch (idx) {
+            case 0: return lhs;
+            case 1: return rhs;
+            default: throw std::invalid_argument("Indices greater than 1 not supported");
+        }
+    }
+
     TemplateRLwePrimeSample<T, dim, modulus>& getLHS() {
         return lhs;
     }
@@ -246,6 +277,15 @@ struct TemplateRGswSample {
     TemplateRLwePrimeSample<T, dim, modulus>& getRHS() {
         return rhs;
     }
+
+    TemplateRLwePrimeSample<T, dim, modulus> getLHS() const {
+        return lhs;
+    }
+
+    TemplateRLwePrimeSample<T, dim, modulus> getRHS() const {
+        return rhs;
+    }
+
 
 private:
     TemplateRLwePrimeSample<T, dim, modulus> lhs;
@@ -313,12 +353,12 @@ TemplateRLwePrimeSample<T, dim, modulus> operator-(TemplateRLwePrimeSample<T, di
 }
 
 template<typename T, size_t dim, T modulus>
-TemplateRLwePrimeSample<T, dim, modulus> operator*(TemplateRLwePrimeSample<T, dim, modulus> lhs, const TemplatePolynomial<T, dim, modulus>& rhs) {
+TemplateRLweSample<T, dim, modulus> operator*(TemplateRLwePrimeSample<T, dim, modulus> lhs, const TemplatePolynomial<T, dim, modulus>& rhs) {
 
     auto decomposed = rhs.decompose(lhs.getBase());
     TemplateRLweSample<T, dim, modulus> accu;
 
-    for(int i = 0; i < lhs.getBase(); i++) {
+    for(int i = 0; i < lhs.getDimension(); i++) {
         accu += lhs[i] * decomposed[i];
     }
 
@@ -343,12 +383,12 @@ TemplateRGswSample<T, dim, modulus> operator-(TemplateRGswSample<T, dim, modulus
 }
 
 template<typename T, size_t dim, T modulus>
-TemplateRGswSample<T, dim, modulus> operator*(TemplateRGswSample<T, dim, modulus> lhs, const TemplateRLweSample<T, dim, modulus>& rhs) {
-    return lhs.getLHS() * rhs.getA() + lhs.getRHS() * rhs.GetB();
+TemplateRLweSample<T, dim, modulus> operator*(TemplateRGswSample<T, dim, modulus> lhs, const TemplateRLweSample<T, dim, modulus>& rhs) {
+    return (lhs.getLHS() * rhs.getA()) + (lhs.getRHS() * rhs.getB());
 }
 
 template<typename T, size_t dim, T modulus>
-TemplateRGswSample<T, dim, modulus> operator*( const TemplateRLweSample<T, dim, modulus>& rhs, TemplateRGswSample<T, dim, modulus> lhs ) {
+TemplateRLweSample<T, dim, modulus> operator*( const TemplateRLweSample<T, dim, modulus>& rhs, TemplateRGswSample<T, dim, modulus> lhs ) {
     return lhs * rhs;
 }
 

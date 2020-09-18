@@ -72,10 +72,60 @@ bool TEST_VECTOR_OPS() {
 
 bool TEST_POLY_OPS() {
 
+    Polynomial a;
+    NTT_engine<ELEMENT_TYPE, RLWE_DIM, RLWE_MOD> ntt;
+
+    for(int i = 0; i < RLWE_DIM; i++) {
+        a[i] = i;
+    }
+
+    /* constructors */
+    Polynomial d(ntt);
+    Polynomial e(a);
+    Polynomial f(ntt, 1, 0);
+
+    for(int i = 0; i < RLWE_DIM; i++) {
+        d[i] = i;
+    }
+
+    /* equality */
+    if(a != e) {
+        std::cerr << __FILE__ << " " << __LINE__ << " ] Polynomials should match..." << std::endl;
+        return false;
+    }
+
+    /* ntt */
+    e.setFormat(NTT);
+    e.setFormat(DEFAULT);
+
+    if(a != e) {
+        std::cerr << __FILE__ << " " << __LINE__ << " ] 2 * NTT should be identical " << std::endl;
+        return false;
+    }
+
+    f = d + d;
+    for(int i = 0; i < RLWE_DIM; i++) {
+        if(f[i] != 2 * i) {
+            std::cerr << __FILE__ << " " << __LINE__ << " ] Sum does not match " << std::endl;
+            return false;
+        }
+    }
+
+    f -= d;
+    for(int i = 0; i < RLWE_DIM; i++) {
+        if(f[i] != d[i]) {
+            std::cerr << __FILE__ << " " << __LINE__ << " ] 2 * d - d != d " << std::endl;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool TEST_ALL_COMMON() {
+
     bool ret = TEST_VECTOR_OPS();
+    ret &= TEST_POLY_OPS();
 
     return ret;
 }

@@ -28,7 +28,7 @@ struct DefaultRandomEngine : RandomEngine<T> {
 
     }
 
-    virtual T generate_normal() {
+    virtual T generate_normal()  {
         return normal_dist(mt);
     }
 
