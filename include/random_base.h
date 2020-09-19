@@ -20,9 +20,10 @@ struct DefaultRandomEngine : RandomEngine<T> {
 
     DefaultRandomEngine(T lwe_modulus, T ring_modulus, double normal_mean, double normal_stddev) : l_modulus(lwe_modulus), r_mod(ring_modulus), stddev(normal_stddev),
                                                                                mean(normal_mean), dev(), mt(dev()),
-                                                                               normal_dist(normal_mean, normal_stddev),
                                                                                ring_uniform_dist(0, ring_modulus),
-                                                                               lwe_uniform_dist(0, lwe_modulus) {};
+                                                                               normal_dist(normal_mean, normal_stddev),
+                                                                               lwe_uniform_dist(0, lwe_modulus)
+                                                                               {};
 
     DefaultRandomEngine(const DefaultRandomEngine<T>& other) : DefaultRandomEngine(other.l_modulus, other.r_mod, other.mean, other.stddev) {
 
@@ -49,7 +50,7 @@ private:
 
     std::random_device dev;
     std::mt19937 mt;
-    std::normal_distribution<double> ring_uniform_dist;
+    std::uniform_int_distribution<T> ring_uniform_dist;
     std::normal_distribution<double> normal_dist;
     std::uniform_int_distribution<T> lwe_uniform_dist;
 };

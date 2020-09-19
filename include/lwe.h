@@ -27,7 +27,7 @@ struct TemplateCryptoEngine {
     }
      */
 
-    explicit TemplateCryptoEngine(RandomEngine<T>& base_engine, T base, T dim) : random_engine(base_engine), ntt_engine(), rgsw_base(base), rgsw_decomp_dim(dim) {};
+    explicit TemplateCryptoEngine(RandomEngine<T>& base_engine, T base, T dim) : rgsw_base(base), rgsw_decomp_dim(dim), random_engine(base_engine), ntt_engine(){};
 
     TemplateCryptoEngine(const TemplateCryptoEngine& other) : random_engine(other.random_engine), ntt_engine(), rgsw_base(other.rgsw_base), rgsw_decomp_dim(other.rgsw_decomp_dim)  {
 
@@ -112,7 +112,9 @@ struct TemplateCryptoEngine {
     }
 
     TemplatePolynomial<T, poly_dim, ring_modulus> decrypt_rlwe(const TemplateRLweSample<T, poly_dim, ring_modulus>& ct, const TemplateRingKey<T, poly_dim, ring_modulus>& key) {
-        return ct.getB() - ct.getA() * key;
+        auto pt = ct.getB() - ct.getA() * key;
+        pt.setFormat(DEFAULT);
+        return pt;
     }
 
     TemplatePolynomial<T, poly_dim, ring_modulus> decrypt_rlwe_prime(const TemplateRLwePrimeSample<T, poly_dim, ring_modulus>& ct, const TemplateRingKey<T, poly_dim, ring_modulus>& key) {

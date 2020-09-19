@@ -8,12 +8,22 @@
 
 int main() {
 
-    if (!TEST_ALL_COMMON()) {
+    bool all = true;
+    bool ret = TEST_ALL_COMMON();
+
+    all &= ret;
+    if (!ret) {
         std::cerr << "Failed vector/poly test" << std::endl;
     }
 
-    if (!TEST_ALL_SAMPLE()) {
+    ret = TEST_ALL_SAMPLE();
+    all &= ret;
+    if (!ret) {
         std::cerr << "Failed sample test" << std::endl;
+    }
+
+    if(all) {
+        std::cerr << "All tests passed" << std::endl;
     }
 
 }

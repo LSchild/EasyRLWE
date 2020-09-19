@@ -124,6 +124,7 @@ struct TemplatePolynomial {
 
     TemplatePolynomial(const TemplatePolynomial& other) : ntt(other.ntt)  {
         this->coefficients = other.coefficients;
+        this->fmt = other.fmt;
     }
 
     TemplatePolynomial(NTT_engine<T, dim, mod>& nttEngine, T val, int idx) : ntt(nttEngine) {
@@ -139,6 +140,7 @@ struct TemplatePolynomial {
 
         swap(lhs.coefficients, rhs.coefficients);
         swap(lhs.ntt, rhs.ntt);
+        swap(lhs.fmt, rhs.fmt);
     }
 
     std::vector<TemplatePolynomial<T, dim, mod>> decompose(T base) const {
@@ -160,7 +162,7 @@ struct TemplatePolynomial {
             T shift = T(std::logb(base));
 
             for(int i = 0; i < slots; i++) {
-                for(int j = 0; j < slots; j++) {
+                for(int j = 0; j < dim; j++) {
                     decomposed[i][j] = copy[j] & mask;
                     copy[j] >>= shift;
                 }
@@ -192,18 +194,32 @@ struct TemplatePolynomial {
         fmt = target;
     }
 
+    [[nodiscard]] Format getFormat() const {
+        return fmt;
+    }
+
     TemplatePolynomial& operator=(TemplatePolynomial other) {
         swap(*this, other);
         return *this;
     }
 
     void operator+=(const TemplatePolynomial& other) {
+
+#ifdef DEBUG
+        if (other.fmt != this->fmt)
+            throw std::invalid_argument("Format of this and rhs do not match !");
+#endif
         for(int i = 0; i < dim; i++) {
             coefficients[i] = (coefficients[i] + other.coefficients[i]) % mod;
         }
     }
 
     void operator-=(const TemplatePolynomial& other) {
+
+#ifdef DEBUG
+        if (other.fmt != this->fmt)
+            throw std::invalid_argument("Format of this and rhs do not match !");
+#endif
         for(int i = 0; i < dim; i++) {
             T a = coefficients[i];
             T b = other.coefficients[i];
@@ -267,6 +283,12 @@ TemplatePolynomial<T, dim, modulus> operator*(TemplatePolynomial<T, dim, modulus
 }
 
 template<typename T,  size_t dim, T modulus>
+TemplatePolynomial<T, dim, modulus> operator*(TemplatePolynomial<T, dim, modulus> lhs, const T rhs) {
+    lhs *= rhs;
+    return lhs;
+}
+
+template<typename T,  size_t dim, T modulus>
 TemplatePolynomial<T, dim, modulus> operator-(TemplatePolynomial<T, dim, modulus> lhs, const TemplatePolynomial<T, dim, modulus>& rhs) {
     lhs -= rhs;
     return lhs;
@@ -299,5 +321,15 @@ bool operator!=(const TemplatePolynomial<T, dim, modulus>& lhs, const TemplatePo
 template<typename T, size_t dim, T modulus>
 bool operator!=(const TemplateVector<T, dim, modulus>& lhs, const TemplateVector<T, dim, modulus>& rhs) {
     return !(lhs == rhs);
+}
+
+template<typename T, size_t dim, T modulus>
+std::ostream& operator<<(std::ostream& ostream, const TemplatePolynomial<T, dim, modulus>& rhs) {
+    ostream << "[ ";
+    for(int i = 0; i < dim - 1; i++) {
+        ostream << rhs[i] << ", ";
+    }
+    ostream << rhs[dim - 1] << " ]";
+    return ostream;
 }
 #endif //LWE_STRUCTS_COMMON_H

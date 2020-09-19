@@ -22,7 +22,7 @@ https://crypto.stackexchange.com/questions/63614/finding-the-n-th-root-of-unity-
 
 			// prime modulus carmichael = phi function
 			// x^(carmichael(p)/k) = 1 ^ (-k) mod p
-			constexpr T cm = (modulus - 1) / poly_dim;
+			//constexpr T cm = (modulus - 1) / poly_dim;
 			constexpr T cm2 = (modulus - 1) / (2 * poly_dim);
 
 			T tmp = 1;
