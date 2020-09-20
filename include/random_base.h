@@ -43,6 +43,9 @@ struct DefaultRandomEngine : RandomEngine<T> {
         return ring_uniform_dist(mt);
     }
 
+    virtual T generate_uniform_binary() {
+        return binary_uniform(mt);
+    }
 
 private:
     T l_modulus = 0;
