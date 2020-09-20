@@ -13,6 +13,7 @@ struct RandomEngine {
     virtual T generate_normal() = 0;
     virtual T generate_uniform_lwe() = 0;
     virtual T generate_uniform_rlwe() = 0;
+    virtual T generate_uniform_binary() = 0;
 };
 
 template<typename T>
@@ -22,7 +23,8 @@ struct DefaultRandomEngine : RandomEngine<T> {
                                                                                mean(normal_mean), dev(), mt(dev()),
                                                                                ring_uniform_dist(0, ring_modulus),
                                                                                normal_dist(normal_mean, normal_stddev),
-                                                                               lwe_uniform_dist(0, lwe_modulus)
+                                                                               lwe_uniform_dist(0, lwe_modulus),
+                                                                               binary_uniform(0, 2)
                                                                                {};
 
     DefaultRandomEngine(const DefaultRandomEngine<T>& other) : DefaultRandomEngine(other.l_modulus, other.r_mod, other.mean, other.stddev) {
@@ -53,6 +55,7 @@ private:
     std::uniform_int_distribution<T> ring_uniform_dist;
     std::normal_distribution<double> normal_dist;
     std::uniform_int_distribution<T> lwe_uniform_dist;
+    std::uniform_int_distribution<T> binary_uniform;
 };
 
 #endif //LWE_STRUCTS_RANDOM_BASE_H

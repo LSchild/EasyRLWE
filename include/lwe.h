@@ -11,12 +11,21 @@
 #include "samples.h"
 #include "random_base.h"
 
+enum KeyType {
+    BINARY,
+    ARBITRARY
+};
+
 /* for clarity */
 template<typename T, size_t len, T modulus>
-using TemplateLweKey = TemplateVector<T, len, modulus>;
+struct TemplateLweKey : TemplateVector<T, len, modulus> {
+    KeyType type = ARBITRARY;
+};
 
 template<typename T, size_t dim, T modulus>
-using TemplateRingKey = TemplatePolynomial<T, dim, modulus>;
+struct TemplateRingKey : TemplatePolynomial<T, dim, modulus> {
+    KeyType type = ARBITRARY;
+};
 
 template<typename T, size_t vector_len, size_t poly_dim, T lwe_modulus, T ring_modulus>
 struct TemplateCryptoEngine {
@@ -125,21 +134,33 @@ struct TemplateCryptoEngine {
         return decrypt_rlwe_prime(ct.getRHS(), key);
     }
 
-    TemplateRingKey<T, poly_dim, ring_modulus> generate_ring_key() {
+    TemplateRingKey<T, poly_dim, ring_modulus> generate_ring_key(KeyType type = ARBITRARY) {
         TemplateRingKey<T, poly_dim, ring_modulus> ret;
 
-        for(int i = 0; i < poly_dim; i++) {
-            ret[i] = random_engine.generate_uniform_rlwe();
+        if(type == ARBITRARY) {
+            for (int i = 0; i < poly_dim; i++) {
+                ret[i] = random_engine.generate_uniform_rlwe();
+            }
+        } else {
+            for(int i = 0; i < poly_dim; i++) {
+                ret[i] = random_engine.generate_uniform_binary();
+            }
         }
 
         return ret;
     }
 
-    TemplateLweKey<T, vector_len, lwe_modulus> generate_lwe_key() {
-        TemplateLweKey<T, poly_dim, ring_modulus> ret;
+    TemplateLweKey<T, vector_len, lwe_modulus> generate_lwe_key(KeyType type = ARBITRARY) {
+        TemplateLweKey<T, vector_len, lwe_modulus> ret;
 
-        for(int i = 0; i < poly_dim; i++) {
-            ret[i] = random_engine.generate_uniform_lwe();
+        if (type == ARBITRARY) {
+            for (int i = 0; i < vector_len; i++) {
+                ret[i] = random_engine.generate_uniform_lwe();
+            }
+        } else {
+            for (int i = 0; i < vector_len; i++) {
+                ret[i] = random_engine.generate_uniform_binary();
+            }
         }
 
         return ret;
