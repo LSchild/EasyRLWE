@@ -1,8 +1,9 @@
+
+# add_compile_definitions(DEBUG)
 if(DEBUG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -Wall")
-    add_compile_definitions(DEBUG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -Wall -march=native")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
 endif()
 
 set(TEST_SOURCES main_test.cpp common_test.cpp sample_test.cpp )

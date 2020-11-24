@@ -11,7 +11,9 @@
 #include <vector>
 #include <cmath>
 
+#include "vector_ops.h"
 #include "ntt.h"
+#define FAST
 
 static NTT_engine<uint32_t, 1024, 134215681> default_uint32_t_engine{};
 
@@ -209,9 +211,16 @@ struct TemplatePolynomial {
         if (other.fmt != this->fmt)
             throw std::invalid_argument("Format of this and rhs do not match !");
 #endif
+#ifdef FAST
+        auto s_data = coefficients.data();
+        auto o_data = other.coefficients.data();
+
+        modadd_vec<T, dim, mod>(s_data, s_data, o_data);
+#else
         for(int i = 0; i < dim; i++) {
             coefficients[i] = (coefficients[i] + other.coefficients[i]) % mod;
         }
+#endif
     }
 
     void operator-=(const TemplatePolynomial& other) {
@@ -220,12 +229,20 @@ struct TemplatePolynomial {
         if (other.fmt != this->fmt)
             throw std::invalid_argument("Format of this and rhs do not match !");
 #endif
+
+#ifdef FAST
+        auto s_data = coefficients.data();
+        auto o_data = other.coefficients.data();
+
+        modsub_vec<T, dim, mod>(s_data, s_data, o_data);
+#else
         for(int i = 0; i < dim; i++) {
             T a = coefficients[i];
             T b = other.coefficients[i];
 
             coefficients[i] = (a >= b) ? a - b : (mod - b) + a;
         }
+#endif
     }
 
     void operator*=(T rhs) {
@@ -256,9 +273,18 @@ struct TemplatePolynomial {
         return coefficients[idx];
     }
 
+    NTT_engine<T, dim, mod>& getNTT() const {
+        return ntt;
+    }
+
+    void negate() {
+        for(int i = 0; i < dim; i++) {
+            coefficients[i] = coefficients[i] != 0 ? mod - coefficients[i] : 0;
+        }
+    }
 private:
 
-    std::array<T, dim> coefficients{};
+    alignas(sizeof(T) * 8) std::array<T, dim> coefficients{};
     NTT_engine<T, dim, mod>& ntt;
     Format fmt = DEFAULT;
 

@@ -93,6 +93,11 @@ struct TemplateRLweSample {
         b = a1;
     }
 
+    explicit TemplateRLweSample(const TemplatePolynomial<T, dim, modulus>& msg) {
+        a = TemplatePolynomial<T, dim, modulus>(msg.getNTT());
+        b = msg;
+    }
+
     friend void swap(TemplateRLweSample& lhs, TemplateRLweSample& rhs) {
         using std::swap;
 
@@ -142,6 +147,10 @@ struct TemplateRLweSample {
         return b;
     }
 
+    void negate() {
+        a.negate();
+        b.negate();
+    }
 private:
 
     TemplatePolynomial<T, dim, modulus> a;
@@ -151,10 +160,16 @@ private:
 template<typename T, size_t dim, T modulus>
 struct TemplateRLwePrimeSample {
 
-    TemplateRLwePrimeSample() = default;
+    TemplateRLwePrimeSample() = delete;
 
-    TemplateRLwePrimeSample(T dec_base, T dec_dim) : decomposition_base(dec_base), decomposition_dimension(dec_dim) {
-        entries.reserve(dec_dim);
+    TemplateRLwePrimeSample(T dec_base, T dec_dim) : entries(dec_dim), decomposition_base(dec_base), decomposition_dimension(dec_dim) {
+    }
+
+    TemplateRLwePrimeSample(TemplatePolynomial<T,dim,modulus> msg, T dec_base, T dec_dim) : decomposition_base(dec_base), decomposition_dimension(dec_dim) {
+        for(int i = 0; i < dec_dim; i++) {
+            entries.emplace_back(msg);
+            msg *= dec_base;
+        }
     }
 
     TemplateRLwePrimeSample(const TemplateRLwePrimeSample& other): entries(other.entries), decomposition_base(other.decomposition_base),
@@ -214,6 +229,11 @@ struct TemplateRLwePrimeSample {
         return entries;
     }
 
+    void negate() {
+        for(auto v : entries) {
+            v.negate();
+        }
+    }
 private:
     std::vector<TemplateRLweSample<T, dim, modulus>> entries;
     T decomposition_base;
@@ -229,6 +249,16 @@ struct TemplateRGswSample {
     }
 
     TemplateRGswSample(T dec_base, T dec_dim) : lhs(dec_base, dec_dim), rhs(dec_base, dec_dim) {
+    }
+
+    TemplateRGswSample(TemplatePolynomial<T, dim, modulus> msg, T dec_base, T dec_dim) : lhs(dec_base, dec_dim),
+    rhs(TemplateRLwePrimeSample<T, dim, modulus>(msg, dec_base, dec_dim)) {
+
+        TemplatePolynomial<T, dim, modulus> zero(msg.getNTT());
+        for(int i = 0; i < dec_dim; i++) {
+            lhs[i] = TemplateRLweSample<T, dim, modulus>(msg, zero);
+            msg *= dec_base;
+        }
     }
 
     friend void swap(TemplateRGswSample& o_lhs, TemplateRGswSample& o_rhs) {
@@ -408,6 +438,28 @@ TemplateRLweSample<T, dim, modulus> operator*(TemplateRGswSample<T, dim, modulus
 template<typename T, size_t dim, T modulus>
 TemplateRLweSample<T, dim, modulus> operator*( const TemplateRLweSample<T, dim, modulus>& rhs, TemplateRGswSample<T, dim, modulus> lhs ) {
     return lhs * rhs;
+}
+
+template<typename T, size_t dim, T modulus>
+TemplateRLwePrimeSample<T, dim, modulus> operator*(TemplateRGswSample<T,dim,modulus>& lhs, TemplateRLwePrimeSample<T,dim,modulus> sample) {
+
+    for(int i = 0; i < sample.getDimension(); i++) {
+        sample[i] = sample[i] * lhs;
+    }
+
+    return sample;
+}
+
+template<typename T, size_t dim, T modulus>
+TemplateRGswSample<T, dim, modulus> operator*(TemplateRGswSample<T, dim, modulus>& lhs, TemplateRGswSample<T, dim, modulus>& rhs) {
+
+
+    TemplateRGswSample<T, dim, modulus> ret(lhs.getLHS().getBase(), lhs.getLHS().getDimension());
+
+    ret[0] = lhs * rhs.getLHS();
+    ret[1] = lhs * rhs.getRHS();
+
+    return ret;
 }
 
 template<typename T, size_t dim, T modulus>

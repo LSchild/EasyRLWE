@@ -13,6 +13,9 @@
 #define LWE_DIM 512
 #define LWE_MOD 1024
 
+#define PT_DIM 32
+#define DELTA (uint32_t(RLWE_MOD) / PT_DIM)
+
 #define NORMAL_STDDEV 3.19
 #define ELEMENT_TYPE uint32_t
 

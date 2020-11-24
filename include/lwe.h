@@ -11,6 +11,8 @@
 #include "samples.h"
 #include "random_base.h"
 
+#define NOISE
+
 enum KeyType {
     BINARY,
     ARBITRARY
@@ -90,7 +92,7 @@ struct TemplateCryptoEngine {
 
         TemplateRLwePrimeSample<T, poly_dim, ring_modulus> ret(rgsw_base, rgsw_decomp_dim);
         for(int i = 0; i < rgsw_decomp_dim; i++) {
-            ret.getEntries().emplace_back(encrypt_rlwe(key, message));
+            ret[i] = encrypt_rlwe(key, message);
             message *= rgsw_base;
         }
 
@@ -103,17 +105,19 @@ struct TemplateCryptoEngine {
      */
     TemplateRGswSample<T, poly_dim, ring_modulus> encrypt_rgsw(const TemplateRingKey<T, poly_dim, ring_modulus>& key, const TemplatePolynomial<T, poly_dim, ring_modulus>& message) {
 
-        TemplateRGswSample<T, poly_dim, ring_modulus> ret;
+        TemplateRGswSample<T, poly_dim, ring_modulus> ret(rgsw_base, rgsw_decomp_dim);
 
         auto sm = key * message;
-        for(int i = 0; i < poly_dim; i++) {
-            sm[i] = ring_modulus - sm[i];
-        }
+        sm.negate();
 
         ret[0] = encrypt_rlwe_prime(key, sm);
         ret[1] = encrypt_rlwe_prime(key, message);
 
         return ret;
+    }
+
+    TemplateRGswSample<T, poly_dim, ring_modulus> trivial_rgsw(const TemplatePolynomial<T, poly_dim, ring_modulus>& msg) {
+        return TemplateRGswSample<T, poly_dim, ring_modulus>(msg, rgsw_base, rgsw_decomp_dim);
     }
 
     T decrypt_lwe(const TemplateLweSample<T, vector_len, lwe_modulus>& ct, const TemplateLweSample<T, vector_len, lwe_modulus>& key) {

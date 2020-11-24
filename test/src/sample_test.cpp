@@ -9,6 +9,8 @@
 #include "parameters.h"
 #include "test_utils.h"
 
+#include <chrono>
+
 #include "sample_test.h"
 
 bool TEST_ENCRYPTION(CryptoEngine& cryptoEngine, NTT_engine<ELEMENT_TYPE, RLWE_DIM, RLWE_MOD>& nttEngine) {
@@ -100,6 +102,43 @@ bool TEST_ALL_SAMPLE() {
     NTT_engine<ELEMENT_TYPE, RLWE_DIM, RLWE_MOD> nttEngine;
     DefaultRandomEngine<ELEMENT_TYPE> randomEngine(LWE_MOD, RLWE_MOD, 0, 3.19);
     CryptoEngine cryptoEngine(randomEngine, 1024u,  3);
+
+    Polynomial msg(nttEngine), msg1(nttEngine), msg2;
+    auto key = cryptoEngine.generate_ring_key();
+
+    msg[0] = DELTA * 31;
+    msg1[0] = DELTA * 8;
+    msg2[0] = 134215649;
+
+    auto triv = cryptoEngine.trivial_rgsw(msg2);
+
+    /*
+    for(int i = 0; i < 2; i++) {
+        std::cout << (i == 0 ? "LHS" : "RHS") << std::endl;
+        for(int j = 0; j < 3; j++) {
+            auto sample = triv[i][j];
+            std::cout << j << sample.getA() << " | " << sample.getB() << std::endl;
+        }
+    } */
+
+    auto ct = cryptoEngine.encrypt_rgsw(key, msg);
+    auto ct1 = cryptoEngine.encrypt_rgsw(key, msg1);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    auto res1 = triv * ct;
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto el = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    auto res = ct1 * res1;
+    auto dec = cryptoEngine.decrypt_rgsw(res, key);
+
+    for(int i = 0; i < RLWE_DIM; i++) {
+        std::cout << uint64_t(std::round(double(dec[i]) / double(DELTA))) % 32 << " ";
+    }
+
+    std::cout << std::endl << el.count() << std::endl;
 
     TEST_RGSW_MUL(cryptoEngine, nttEngine);
     bool ret = TEST_ENCRYPTION(cryptoEngine, nttEngine);

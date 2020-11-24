@@ -6,6 +6,8 @@
 #include "common.h"
 #include "parameters.h"
 
+#include <chrono>
+
 bool TEST_VECTOR_OPS() {
 
     Vector a,b;
@@ -103,7 +105,14 @@ bool TEST_POLY_OPS() {
         return false;
     }
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     f = d + d;
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(stop-start);
+    std::cerr << "Elapsed " << elapsed.count() << std::endl;
+
     for(int i = 0; i < RLWE_DIM; i++) {
         if(f[i] != 2 * i) {
             std::cerr << __FILE__ << " " << __LINE__ << " ] Sum does not match " << std::endl;

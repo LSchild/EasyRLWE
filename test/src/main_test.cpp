@@ -22,6 +22,7 @@ int main() {
         std::cerr << "Failed sample test" << std::endl;
     }
 
+
     if(all) {
         std::cerr << "All tests passed" << std::endl;
     }
